@@ -1,26 +1,33 @@
 #!/bin/bash
 
 # Folder you want to backup 
-input_file=""
-input_storage=""
-input_nfs=""
+input_file="/home/backup/backup_data"
+input_storage="/home/backup/backup_storage"
+input_nfs="/home/backup/backup_nfs"
 
-recepient_email=""
+recepient_email="rizkycht@gmail.com"
 
 # Input Telegram bot token and group chat ID that will send output
-BOT_TOKEN=""
-CHAT_ID=""
+BOT_TOKEN="7251367783:AAF_kE4pLCJ2ONHHG02nnSs34E9CFqQanSE"
+CHAT_ID="6831473348"
+
+# Check if source folder exists
+if [ ! -d "$input_file" ]; then
+  output="Error: Directory $input_file does not exist. Backup failed!"
+  echo "$output"
+  curl --data "chat_id=$CHAT_ID&text=$output" "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" &> /dev/null
+  exit 1
+fi
 
 # Create the archive file name based on the input_file name
 archive_file=${input_file}_$(date +%d-%m-%Y).tar.gz
 
-#Create encrypted file name
+# Create encrypted file name
 encrypted_file=${archive_file}.gpg
 file_name=$(basename $encrypted_file)
 
-
 # Create the archive using tar with gzip 
-tar -czvf $archive_file -C "$input_file"/ . 
+tar -czvf $archive_file -C "$input_file"/ .
 
 # Encrypt the archive using GPG
 gpg --encrypt --recipient $recepient_email --trust-model always $archive_file
@@ -28,27 +35,21 @@ gpg --encrypt --recipient $recepient_email --trust-model always $archive_file
 # Delete the original archive file
 rm $archive_file
 
-# Move encrypted to external media
-mv -f  $encrypted_file $input_storage
+# Move encrypted file to storage
+mkdir -p $input_storage
+mv -f $encrypted_file $input_storage
 
-# Syncronize extenal media with nfs folder
-rsync -av ${input_storage}/ $input_nfs
+# Synchronize external media with NFS folder
+echo "Starting rsync..."
+mkdir -p $input_nfs
+rsync -av --no-times "$input_storage/" "$input_nfs/" || { echo "Rsync failed"; exit 1; }
 
-#check if that files existed on nfs folder
+# Check if file exists on NFS folder
 if [ -f "${input_nfs}/${file_name}" ]; then
-  output="success! $file_name has been created on ${input_nfs} and ${input_storage}. Backup completed."
-
-  echo "script completed"
-  echo "$file_name has been created on ${input_nfs} and ${input_storage}"
-
+  output="Success! $file_name has been created on $input_nfs and $input_storage. Backup completed."
 else
-  output="Erorr, $file_name does not exist. Backup Failed!"
+  output="Error, $file_name does not exist. Backup failed!"
 fi
 
-#Send output to telegram
+# Send output to Telegram
 curl --data "chat_id=$CHAT_ID&text=$output" "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" &> /dev/null
-
-
-                                                                                                                                            48,0-1        Bot
-
-
