@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Folder you want to backup 
-input_file="/home/backup/backup_data"
-input_storage="/home/backup/backup_storage"
-input_nfs="/home/backup/backup_nfs"
+input_file=""
+input_storage=""
+input_nfs=""
 
-recepient_email="rizkycht@gmail.com"
+recepient_email=""
 
 # Input Telegram bot token and group chat ID that will send output
-BOT_TOKEN="7251367783:AAF_kE4pLCJ2ONHHG02nnSs34E9CFqQanSE"
-CHAT_ID="6831473348"
+BOT_TOKEN=""
+CHAT_ID=""
 
 # Check if source folder exists
 if [ ! -d "$input_file" ]; then
